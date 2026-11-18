@@ -1,0 +1,22 @@
+name: pdf_viewer_example
+description: Interactive showcase application for the pdf_viewer package, supported by Humanize AI (https://humanize.id).
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pdf_viewer:
+    path: ../
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true

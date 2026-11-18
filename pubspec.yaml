@@ -1,0 +1,35 @@
+name: pdf_viewer
+description: A modern, high-performance, pure-Flutter PDF viewer with text search, annotations, thumbnails, bookmarks, multi-layout modes, and dark mode support.
+version: 1.0.0
+homepage: https://humanize.id
+repository: https://github.com/andikpbw/pdf-viewer
+issue_tracker: https://github.com/andikpbw/pdf-viewer/issues
+documentation: https://humanize.id
+
+topics:
+  - pdf
+  - pdf-viewer
+  - document-viewer
+  - reader
+  - widget
+
+platforms:
+  android:
+  ios:
+  linux:
+  macos:
+  web:
+  windows:
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_lints: ^6.0.0
+  flutter_test:
+    sdk: flutter
