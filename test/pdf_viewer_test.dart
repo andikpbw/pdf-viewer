@@ -1,23 +1,24 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf_reader/pdf_reader.dart';
 
 void main() {
   group('ZlibDecoder', () {
     test(
-        'round-trips arbitrary byte payloads via encodeZlibStored and tryDecode',
-        () {
-      final Uint8List original = Uint8List.fromList(
-        utf8.encode('BT /F1 16.0 Tf (Supported by Humanize AI) Tj ET'),
-      );
-      final Uint8List compressed = ZlibDecoder.encodeZlibStored(original);
-      final Uint8List? decompressed = ZlibDecoder.tryDecode(compressed);
+      'round-trips arbitrary byte payloads via encodeZlibStored and tryDecode',
+      () {
+        final Uint8List original = Uint8List.fromList(
+          utf8.encode('BT /F1 16.0 Tf (Supported by Humanize AI) Tj ET'),
+        );
+        final Uint8List compressed = ZlibDecoder.encodeZlibStored(original);
+        final Uint8List? decompressed = ZlibDecoder.tryDecode(compressed);
 
-      expect(decompressed, isNotNull);
-      expect(decompressed, equals(original));
-    });
+        expect(decompressed, isNotNull);
+        expect(decompressed, equals(original));
+      },
+    );
   });
 
   group('PdfDocumentBuilder & PdfParser', () {
@@ -34,10 +35,7 @@ void main() {
         parsed.metadata.title,
         equals('Modern Flutter PDF Viewer — Official Guide'),
       );
-      expect(
-        parsed.metadata.author,
-        contains('Humanize AI'),
-      );
+      expect(parsed.metadata.author, contains('Humanize AI'));
       expect(parsed.bookmarks, isNotEmpty);
 
       // Verify full-text search works on the parsed document
@@ -91,8 +89,10 @@ void main() {
         createdAt: DateTime.utc(2026, 1, 1),
       );
 
-      final String jsonStr =
-          PdfAnnotation.encodeList(<PdfAnnotation>[highlight, ink]);
+      final String jsonStr = PdfAnnotation.encodeList(<PdfAnnotation>[
+        highlight,
+        ink,
+      ]);
       final List<PdfAnnotation> restored = PdfAnnotation.decodeList(jsonStr);
 
       expect(restored.length, equals(2));
@@ -117,65 +117,66 @@ void main() {
 
   group('PdfViewerController', () {
     test(
-        'manages navigation, zoom, rotation, search, bookmarks, and annotations',
-        () {
-      final PdfDocument doc = PdfDocumentBuilder.createShowcaseDocument();
-      final PdfViewerController controller = PdfViewerController();
-      controller.attachDocument(doc);
+      'manages navigation, zoom, rotation, search, bookmarks, and annotations',
+      () {
+        final PdfDocument doc = PdfDocumentBuilder.createShowcaseDocument();
+        final PdfViewerController controller = PdfViewerController();
+        controller.attachDocument(doc);
 
-      expect(controller.pageCount, equals(4));
-      expect(controller.currentPage, equals(1));
+        expect(controller.pageCount, equals(4));
+        expect(controller.currentPage, equals(1));
 
-      controller.nextPage();
-      expect(controller.currentPage, equals(2));
-      controller.lastPage();
-      expect(controller.currentPage, equals(4));
-      controller.previousPage();
-      expect(controller.currentPage, equals(3));
-      controller.firstPage();
-      expect(controller.currentPage, equals(1));
+        controller.nextPage();
+        expect(controller.currentPage, equals(2));
+        controller.lastPage();
+        expect(controller.currentPage, equals(4));
+        controller.previousPage();
+        expect(controller.currentPage, equals(3));
+        controller.firstPage();
+        expect(controller.currentPage, equals(1));
 
-      controller.zoomIn(0.5);
-      expect(controller.zoomLevel, closeTo(1.5, 0.001));
-      controller.resetZoom();
-      expect(controller.zoomLevel, closeTo(1.0, 0.001));
+        controller.zoomIn(0.5);
+        expect(controller.zoomLevel, closeTo(1.5, 0.001));
+        controller.resetZoom();
+        expect(controller.zoomLevel, closeTo(1.0, 0.001));
 
-      controller.rotateClockwise();
-      expect(controller.rotationAngle, equals(90));
-      controller.rotateCounterClockwise();
-      expect(controller.rotationAngle, equals(0));
+        controller.rotateClockwise();
+        expect(controller.rotationAngle, equals(90));
+        controller.rotateCounterClockwise();
+        expect(controller.rotationAngle, equals(0));
 
-      controller.search('Humanize AI');
-      expect(controller.searchResults, isNotEmpty);
-      expect(controller.activeSearchResultIndex, equals(0));
-      controller.nextSearchResult();
-      expect(controller.activeSearchResultIndex, greaterThanOrEqualTo(0));
-      controller.clearSearch();
-      expect(controller.searchResults, isEmpty);
+        controller.search('Humanize AI');
+        expect(controller.searchResults, isNotEmpty);
+        expect(controller.activeSearchResultIndex, equals(0));
+        controller.nextSearchResult();
+        expect(controller.activeSearchResultIndex, greaterThanOrEqualTo(0));
+        controller.clearSearch();
+        expect(controller.searchResults, isEmpty);
 
-      controller.toggleBookmark(pageNumber: 2, title: 'Important Page');
-      expect(controller.isPageBookmarked(2), isTrue);
-      controller.toggleBookmark(pageNumber: 2);
-      expect(controller.isPageBookmarked(2), isFalse);
+        controller.toggleBookmark(pageNumber: 2, title: 'Important Page');
+        expect(controller.isPageBookmarked(2), isTrue);
+        controller.toggleBookmark(pageNumber: 2);
+        expect(controller.isPageBookmarked(2), isFalse);
 
-      final PdfAnnotation annotation = PdfAnnotation(
-        id: 'test_ann',
-        pageNumber: 1,
-        type: PdfAnnotationType.highlight,
-        rect: const Rect.fromLTWH(0.1, 0.1, 0.3, 0.05),
-        createdAt: DateTime.utc(2026, 1, 1),
-      );
-      controller.addAnnotation(annotation);
-      expect(controller.annotations.length, equals(1));
-      expect(controller.canUndoAnnotation, isTrue);
+        final PdfAnnotation annotation = PdfAnnotation(
+          id: 'test_ann',
+          pageNumber: 1,
+          type: PdfAnnotationType.highlight,
+          rect: const Rect.fromLTWH(0.1, 0.1, 0.3, 0.05),
+          createdAt: DateTime.utc(2026, 1, 1),
+        );
+        controller.addAnnotation(annotation);
+        expect(controller.annotations.length, equals(1));
+        expect(controller.canUndoAnnotation, isTrue);
 
-      controller.undoAnnotation();
-      expect(controller.annotations, isEmpty);
-      expect(controller.canRedoAnnotation, isTrue);
+        controller.undoAnnotation();
+        expect(controller.annotations, isEmpty);
+        expect(controller.canRedoAnnotation, isTrue);
 
-      controller.redoAnnotation();
-      expect(controller.annotations.length, equals(1));
-    });
+        controller.redoAnnotation();
+        expect(controller.annotations.length, equals(1));
+      },
+    );
   });
 
   group('PdfViewer Widget', () {
@@ -186,12 +187,19 @@ void main() {
       final PdfViewerController controller = PdfViewerController();
 
       await tester.pumpWidget(
-        MaterialApp(
+        WidgetsApp(
+          color: const Color(0xFF2563EB),
           home: PdfViewer.fromDocument(
             doc,
             controller: controller,
             showSupportBadge: true,
           ),
+          pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
+            return PageRouteBuilder<T>(
+              settings: settings,
+              pageBuilder: (BuildContext ctx, _, __) => builder(ctx),
+            );
+          },
         ),
       );
       await tester.pumpAndSettle();
@@ -201,22 +209,22 @@ void main() {
       expect(find.textContaining('Humanize AI'), findsWidgets);
 
       // Navigate to next page via bottom scrubber button
-      await tester.tap(find.byTooltip('Next Page'));
+      await tester.tap(find.bySemanticsLabel('Next Page'));
       await tester.pumpAndSettle();
       expect(controller.currentPage, equals(2));
       expect(find.text('2 / 4'), findsOneWidget);
 
       // Open search bar and search for "Vector"
-      await tester.tap(find.byTooltip('Search in PDF'));
+      await tester.tap(find.bySemanticsLabel('Search in PDF'));
       await tester.pumpAndSettle();
       expect(find.byType(PdfSearchBar), findsOneWidget);
 
-      await tester.enterText(find.byType(TextField), 'Vector');
+      await tester.enterText(find.byType(EditableText), 'Vector');
       await tester.pumpAndSettle();
       expect(controller.searchResults, isNotEmpty);
 
       // Toggle thumbnail bar
-      await tester.tap(find.byTooltip('Page Thumbnails'));
+      await tester.tap(find.bySemanticsLabel('Page Thumbnails'));
       await tester.pumpAndSettle();
       expect(find.byType(PdfThumbnailBar), findsOneWidget);
     });

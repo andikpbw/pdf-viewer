@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 
 /// Supported interactive annotation types in `pdf_viewer`.
 enum PdfAnnotationType {

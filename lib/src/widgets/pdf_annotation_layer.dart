@@ -1,7 +1,8 @@
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../models/pdf_annotation.dart';
+import '../theme/pdf_icons.dart';
 
 /// Interactive overlay widget that renders and records [PdfAnnotation] items
 /// on top of a PDF page.
@@ -155,67 +156,196 @@ class _PdfAnnotationLayerState extends State<PdfAnnotationLayer> {
   }) async {
     final TextEditingController textController =
         TextEditingController(text: initialText);
-    return showDialog<String>(
+    final FocusNode focusNode = FocusNode();
+    return showPdfModalDialog<String>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Add Sticky Note'),
-          content: TextField(
-            controller: textController,
-            autofocus: true,
-            maxLines: 4,
-            decoration: const InputDecoration(
-              hintText: 'Write a comment or note for this page...',
-              border: OutlineInputBorder(),
-            ),
+        return Container(
+          width: 340,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x40000000),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () =>
-                  Navigator.of(dialogContext).pop(textController.text),
-              child: const Text('Save Note'),
-            ),
-          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const Text(
+                'Add Sticky Note',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: EditableText(
+                  controller: textController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  maxLines: 4,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF0F172A),
+                  ),
+                  cursorColor: const Color(0xFF2563EB),
+                  backgroundCursorColor: const Color(0xFF94A3B8),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () => Navigator.of(dialogContext).pop(),
+                    child: const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () =>
+                        Navigator.of(dialogContext).pop(textController.text),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Save Note',
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
   void _showStickyNoteDetails(BuildContext context, PdfAnnotation note) {
-    showDialog<void>(
+    showPdfModalDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: Row(
-            children: <Widget>[
-              Icon(Icons.sticky_note_2_rounded, color: note.color),
-              const SizedBox(width: 8),
-              Text('Note on Page ${note.pageNumber}'),
+        return Container(
+          width: 340,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x40000000),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
             ],
           ),
-          content: Text(note.text ?? ''),
-          actions: <Widget>[
-            if (widget.onAnnotationDeleted != null)
-              TextButton.icon(
-                onPressed: () {
-                  widget.onAnnotationDeleted?.call(note.id);
-                  Navigator.of(dialogContext).pop();
-                },
-                icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
-                label: const Text(
-                  'Delete',
-                  style: TextStyle(color: Colors.redAccent),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Icon(PdfIcons.stickyNote, color: note.color),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Note on Page ${note.pageNumber}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                note.text ?? '',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF334155),
                 ),
               ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  if (widget.onAnnotationDeleted != null)
+                    GestureDetector(
+                      onTap: () {
+                        widget.onAnnotationDeleted?.call(note.id);
+                        Navigator.of(dialogContext).pop();
+                      },
+                      child: const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Color(0xFFEF4444),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => Navigator.of(dialogContext).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -268,33 +398,26 @@ class _PdfAnnotationLayerState extends State<PdfAnnotationLayer> {
                       .clamp(0.0, math.max(0.0, size.width - 32)),
                   top: (note.rect!.center.dy * size.height - 16)
                       .clamp(0.0, math.max(0.0, size.height - 32)),
-                  child: Tooltip(
-                    message: note.text ?? 'Sticky Note',
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () => _showStickyNoteDetails(context, note),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color: note.color,
-                            shape: BoxShape.circle,
-                            boxShadow: const <BoxShadow>[
-                              BoxShadow(
-                                color: Color(0x40000000),
-                                blurRadius: 6,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
+                  child: GestureDetector(
+                    onTap: () => _showStickyNoteDetails(context, note),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: note.color,
+                        shape: BoxShape.circle,
+                        boxShadow: const <BoxShadow>[
+                          BoxShadow(
+                            color: Color(0x40000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
                           ),
-                          child: const Icon(
-                            Icons.comment_rounded,
-                            size: 17,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
+                        ],
+                      ),
+                      child: const Icon(
+                        PdfIcons.comment,
+                        size: 17,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
                   ),
@@ -353,7 +476,6 @@ class _AnnotationCanvasPainter extends CustomPainter {
             _paintStamp(canvas, size, annotation);
           }
         case PdfAnnotationType.stickyNote:
-          // Rendered as an interactive widget pin above the canvas.
           break;
       }
     }

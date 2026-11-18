@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 /// Page layout and scrolling modes supported by `PdfViewer`.
 enum PdfPageLayoutMode {
@@ -166,15 +166,13 @@ class PdfViewerTheme {
     );
   }
 
-  /// Resolves an adaptive [PdfViewerTheme] based on the ambient [ThemeData]
+  /// Resolves an adaptive [PdfViewerTheme] based on the ambient platform
   /// brightness in [context].
   factory PdfViewerTheme.fromContext(BuildContext context) {
-    final ThemeData materialTheme = Theme.of(context);
-    final bool isDark = materialTheme.brightness == Brightness.dark;
-    final Color primary = materialTheme.colorScheme.primary;
-    return isDark
-        ? PdfViewerTheme.dark(accentColor: primary)
-        : PdfViewerTheme.light(accentColor: primary);
+    final Brightness brightness =
+        MediaQuery.maybePlatformBrightnessOf(context) ?? Brightness.light;
+    final bool isDark = brightness == Brightness.dark;
+    return isDark ? PdfViewerTheme.dark() : PdfViewerTheme.light();
   }
 
   /// Canvas backdrop color behind PDF pages.

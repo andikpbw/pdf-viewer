@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:pdf_reader/pdf_reader.dart';
 
 void main() {
@@ -39,39 +39,37 @@ class _PdfViewerShowcaseAppState extends State<PdfViewerShowcaseApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'pdf_viewer — Supported by Humanize AI',
+    final PdfViewerTheme activeTheme =
+        _isDarkTheme ? PdfViewerTheme.dark() : PdfViewerTheme.light();
+
+    return WidgetsApp(
+      title: 'pdf_reader — Supported by Humanize AI',
+      color: const Color(0xFF2563EB),
       debugShowCheckedModeBanner: false,
-      themeMode: _isDarkTheme ? ThemeMode.dark : ThemeMode.light,
-      theme: ThemeData(
-        colorSchemeSeed: const Color(0xFF2563EB),
-        useMaterial3: true,
-        brightness: Brightness.light,
-      ),
-      darkTheme: ThemeData(
-        colorSchemeSeed: const Color(0xFF38BDF8),
-        useMaterial3: true,
-        brightness: Brightness.dark,
-      ),
       home: PdfViewer.fromDocument(
         _showcaseDocument,
         controller: _controller,
         showSupportBadge: true,
-        theme: _isDarkTheme ? PdfViewerTheme.dark() : PdfViewerTheme.light(),
+        theme: activeTheme,
         trailingToolbarActions: <Widget>[
-          IconButton(
+          PdfIconButton(
             tooltip: _isDarkTheme ? 'Switch to Light UI' : 'Switch to Dark UI',
+            icon: _isDarkTheme ? PdfIcons.lightMode : PdfIcons.darkMode,
+            color: activeTheme.toolbarForegroundColor,
             onPressed: () {
               setState(() {
                 _isDarkTheme = !_isDarkTheme;
               });
             },
-            icon: Icon(
-              _isDarkTheme ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
-            ),
           ),
         ],
       ),
+      pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) {
+        return PageRouteBuilder<T>(
+          settings: settings,
+          pageBuilder: (BuildContext ctx, _, __) => builder(ctx),
+        );
+      },
     );
   }
 }

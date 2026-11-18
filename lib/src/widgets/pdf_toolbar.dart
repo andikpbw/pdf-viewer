@@ -1,10 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import '../controller/pdf_viewer_controller.dart';
 import '../models/pdf_annotation.dart';
 import '../models/pdf_document.dart';
 import '../models/pdf_metadata.dart';
+import '../theme/pdf_icons.dart';
 import '../theme/pdf_viewer_theme.dart';
 
 /// Adaptive top toolbar for `PdfViewer` providing access to search, layout
@@ -39,26 +40,63 @@ class PdfTopToolbar extends StatelessWidget {
   /// Custom widgets appended at the end of the toolbar.
   final List<Widget> trailingActions;
 
+  void _cycleLayoutMode() {
+    const List<PdfPageLayoutMode> modes = PdfPageLayoutMode.values;
+    final int nextIdx =
+        (modes.indexOf(controller.layoutMode) + 1) % modes.length;
+    controller.setLayoutMode(modes[nextIdx]);
+  }
+
+  void _cycleColorMode() {
+    const List<PdfColorMode> modes = PdfColorMode.values;
+    final int nextIdx =
+        (modes.indexOf(controller.colorMode) + 1) % modes.length;
+    controller.setColorMode(modes[nextIdx]);
+  }
+
   void _showMetadataDialog(BuildContext context) {
     final PdfDocument? doc = controller.document;
     final PdfMetadata meta = doc?.metadata ?? const PdfMetadata();
 
-    showDialog<void>(
+    showPdfModalDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Row(
-            children: <Widget>[
-              Icon(Icons.picture_as_pdf_rounded, color: Color(0xFF2563EB)),
-              SizedBox(width: 10),
-              Expanded(child: Text('Document Information')),
+        return Container(
+          width: 380,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x40000000),
+                blurRadius: 24,
+                offset: Offset(0, 8),
+              ),
             ],
           ),
-          content: SingleChildScrollView(
+          child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                const Row(
+                  children: <Widget>[
+                    Icon(PdfIcons.pdf, color: Color(0xFF2563EB)),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Document Information',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
                 _InfoRow(label: 'Title', value: meta.title ?? 'Untitled'),
                 _InfoRow(label: 'Author', value: meta.author ?? 'Unknown'),
                 _InfoRow(label: 'Subject', value: meta.subject ?? '—'),
@@ -79,7 +117,7 @@ class PdfTopToolbar extends StatelessWidget {
                   label: 'Encrypted',
                   value: meta.isEncrypted ? 'Yes' : 'No',
                 ),
-                const Divider(height: 24),
+                const SizedBox(height: 14),
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -90,7 +128,7 @@ class PdfTopToolbar extends StatelessWidget {
                   child: Row(
                     children: <Widget>[
                       const Icon(
-                        Icons.auto_awesome_rounded,
+                        PdfIcons.sparkle,
                         color: Color(0xFF2563EB),
                         size: 20,
                       ),
@@ -118,39 +156,47 @@ class PdfTopToolbar extends StatelessWidget {
                           ],
                         ),
                       ),
-                      IconButton(
+                      PdfIconButton(
                         tooltip: 'Copy https://humanize.id',
-                        icon: const Icon(
-                          Icons.copy_rounded,
-                          size: 17,
-                          color: Color(0xFF2563EB),
-                        ),
+                        icon: PdfIcons.copy,
+                        size: 17,
+                        color: const Color(0xFF2563EB),
                         onPressed: () {
                           Clipboard.setData(
                             const ClipboardData(text: 'https://humanize.id'),
-                          );
-                          ScaffoldMessenger.of(dialogContext).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Copied Humanize AI link (https://humanize.id)',
-                              ),
-                              duration: Duration(seconds: 2),
-                            ),
                           );
                         },
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: GestureDetector(
+                    onTap: () => Navigator.of(dialogContext).pop(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Close',
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
-          actions: <Widget>[
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Close'),
-            ),
-          ],
         );
       },
     );
@@ -166,9 +212,17 @@ class PdfTopToolbar extends StatelessWidget {
         final bool isBookmarked =
             controller.isPageBookmarked(controller.currentPage);
 
-        return Material(
-          elevation: 2,
-          color: theme.toolbarBackgroundColor,
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.toolbarBackgroundColor,
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x18000000),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+            ],
+          ),
           child: SafeArea(
             bottom: false,
             child: Container(
@@ -178,13 +232,11 @@ class PdfTopToolbar extends StatelessWidget {
                 children: <Widget>[
                   ...leadingActions,
                   if (onOpenBookmarksDrawer != null)
-                    IconButton(
+                    PdfIconButton(
                       tooltip: 'Outlines & Bookmarks',
+                      icon: PdfIcons.toc,
+                      color: theme.toolbarForegroundColor,
                       onPressed: onOpenBookmarksDrawer,
-                      icon: Icon(
-                        Icons.toc_rounded,
-                        color: theme.toolbarForegroundColor,
-                      ),
                     ),
                   Expanded(
                     child: Padding(
@@ -201,128 +253,67 @@ class PdfTopToolbar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  IconButton(
+                  PdfIconButton(
                     tooltip: 'Search in PDF',
+                    icon: PdfIcons.search,
+                    color: controller.isSearchVisible
+                        ? theme.accentColor
+                        : theme.toolbarForegroundColor,
                     onPressed: controller.toggleSearchVisibility,
-                    icon: Icon(
-                      Icons.search_rounded,
-                      color: controller.isSearchVisible
-                          ? theme.accentColor
-                          : theme.toolbarForegroundColor,
-                    ),
                   ),
-                  IconButton(
+                  PdfIconButton(
                     tooltip: isBookmarked
                         ? 'Remove Bookmark'
                         : 'Bookmark Current Page',
+                    icon: isBookmarked
+                        ? PdfIcons.bookmark
+                        : PdfIcons.bookmarkBorder,
+                    color: isBookmarked
+                        ? theme.accentColor
+                        : theme.toolbarForegroundColor,
                     onPressed: controller.toggleBookmark,
-                    icon: Icon(
-                      isBookmarked
-                          ? Icons.bookmark_rounded
-                          : Icons.bookmark_border_rounded,
-                      color: isBookmarked
-                          ? theme.accentColor
-                          : theme.toolbarForegroundColor,
-                    ),
                   ),
-                  IconButton(
+                  PdfIconButton(
                     tooltip: 'Annotate & Markup',
+                    icon: PdfIcons.draw,
+                    color: controller.isAnnotationToolbarVisible
+                        ? theme.accentColor
+                        : theme.toolbarForegroundColor,
                     onPressed: controller.toggleAnnotationToolbar,
-                    icon: Icon(
-                      Icons.draw_rounded,
-                      color: controller.isAnnotationToolbarVisible
-                          ? theme.accentColor
-                          : theme.toolbarForegroundColor,
-                    ),
                   ),
-                  IconButton(
+                  PdfIconButton(
                     tooltip: 'Page Thumbnails',
+                    icon: PdfIcons.gridView,
+                    color: controller.isThumbnailBarVisible
+                        ? theme.accentColor
+                        : theme.toolbarForegroundColor,
                     onPressed: controller.toggleThumbnailBar,
-                    icon: Icon(
-                      Icons.grid_view_rounded,
-                      color: controller.isThumbnailBarVisible
-                          ? theme.accentColor
-                          : theme.toolbarForegroundColor,
-                    ),
                   ),
-                  PopupMenuButton<PdfPageLayoutMode>(
+                  PdfIconButton(
                     tooltip: 'Page Layout Mode',
-                    icon: Icon(
-                      Icons.view_carousel_outlined,
-                      color: theme.toolbarForegroundColor,
-                    ),
-                    initialValue: controller.layoutMode,
-                    onSelected: controller.setLayoutMode,
-                    itemBuilder: (BuildContext context) =>
-                        const <PopupMenuEntry<PdfPageLayoutMode>>[
-                      PopupMenuItem<PdfPageLayoutMode>(
-                        value: PdfPageLayoutMode.continuousVertical,
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(Icons.swap_vert_rounded),
-                          title: Text('Continuous Vertical'),
-                        ),
-                      ),
-                      PopupMenuItem<PdfPageLayoutMode>(
-                        value: PdfPageLayoutMode.continuousHorizontal,
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(Icons.swap_horiz_rounded),
-                          title: Text('Continuous Horizontal'),
-                        ),
-                      ),
-                      PopupMenuItem<PdfPageLayoutMode>(
-                        value: PdfPageLayoutMode.singlePage,
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(Icons.insert_drive_file_outlined),
-                          title: Text('Single Page'),
-                        ),
-                      ),
-                      PopupMenuItem<PdfPageLayoutMode>(
-                        value: PdfPageLayoutMode.doublePage,
-                        child: ListTile(
-                          dense: true,
-                          leading: Icon(Icons.menu_book_rounded),
-                          title: Text('Double Page Spread'),
-                        ),
-                      ),
-                    ],
+                    icon: PdfIcons.viewCarousel,
+                    color: theme.toolbarForegroundColor,
+                    onPressed: _cycleLayoutMode,
                   ),
-                  PopupMenuButton<PdfColorMode>(
+                  PdfIconButton(
                     tooltip: 'Reading Color Mode',
-                    icon: Icon(
-                      Icons.tonality_rounded,
-                      color: controller.colorMode != PdfColorMode.normal
-                          ? theme.accentColor
-                          : theme.toolbarForegroundColor,
-                    ),
-                    initialValue: controller.colorMode,
-                    onSelected: controller.setColorMode,
-                    itemBuilder: (BuildContext context) => PdfColorMode.values
-                        .map(
-                          (PdfColorMode mode) => PopupMenuItem<PdfColorMode>(
-                            value: mode,
-                            child: Text(mode.label),
-                          ),
-                        )
-                        .toList(growable: false),
+                    icon: PdfIcons.tonality,
+                    color: controller.colorMode != PdfColorMode.normal
+                        ? theme.accentColor
+                        : theme.toolbarForegroundColor,
+                    onPressed: _cycleColorMode,
                   ),
-                  IconButton(
+                  PdfIconButton(
                     tooltip: 'Rotate 90° Clockwise',
+                    icon: PdfIcons.rotateRight,
+                    color: theme.toolbarForegroundColor,
                     onPressed: controller.rotateClockwise,
-                    icon: Icon(
-                      Icons.rotate_right_rounded,
-                      color: theme.toolbarForegroundColor,
-                    ),
                   ),
-                  IconButton(
+                  PdfIconButton(
                     tooltip: 'Document Info & Humanize AI Support',
+                    icon: PdfIcons.infoOutline,
+                    color: theme.toolbarForegroundColor,
                     onPressed: () => _showMetadataDialog(context),
-                    icon: Icon(
-                      Icons.info_outline_rounded,
-                      color: theme.toolbarForegroundColor,
-                    ),
                   ),
                   ...trailingActions,
                 ],
@@ -362,7 +353,10 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF0F172A),
+              ),
             ),
           ),
         ],
@@ -402,10 +396,18 @@ class PdfAnnotationToolbar extends StatelessWidget {
       builder: (BuildContext context, _) {
         final PdfAnnotationTool activeTool = controller.activeAnnotationTool;
 
-        return Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(14),
-          color: theme.toolbarBackgroundColor,
+        return Container(
+          decoration: BoxDecoration(
+            color: theme.toolbarBackgroundColor,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x29000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -413,7 +415,7 @@ class PdfAnnotationToolbar extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 _ToolChip(
-                  icon: Icons.pan_tool_alt_rounded,
+                  icon: PdfIcons.panTool,
                   label: 'Pan',
                   isSelected: activeTool == PdfAnnotationTool.none,
                   accentColor: theme.accentColor,
@@ -423,7 +425,7 @@ class PdfAnnotationToolbar extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 _ToolChip(
-                  icon: Icons.highlight_rounded,
+                  icon: PdfIcons.highlight,
                   label: 'Highlight',
                   isSelected: activeTool == PdfAnnotationTool.highlight,
                   accentColor: theme.accentColor,
@@ -433,7 +435,7 @@ class PdfAnnotationToolbar extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 _ToolChip(
-                  icon: Icons.gesture_rounded,
+                  icon: PdfIcons.ink,
                   label: 'Ink',
                   isSelected: activeTool == PdfAnnotationTool.ink,
                   accentColor: theme.accentColor,
@@ -443,7 +445,7 @@ class PdfAnnotationToolbar extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 _ToolChip(
-                  icon: Icons.sticky_note_2_outlined,
+                  icon: PdfIcons.stickyNote,
                   label: 'Note',
                   isSelected: activeTool == PdfAnnotationTool.stickyNote,
                   accentColor: theme.accentColor,
@@ -466,7 +468,7 @@ class PdfAnnotationToolbar extends StatelessWidget {
                           border: Border.all(
                             color: controller.activeAnnotationColor == swatch
                                 ? theme.toolbarForegroundColor
-                                : Colors.transparent,
+                                : const Color(0x00000000),
                             width: 2.2,
                           ),
                         ),
@@ -474,43 +476,34 @@ class PdfAnnotationToolbar extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(width: 8),
-                IconButton(
+                PdfIconButton(
                   tooltip: 'Undo Annotation',
-                  visualDensity: VisualDensity.compact,
+                  icon: PdfIcons.undo,
+                  size: 19,
+                  color: theme.toolbarForegroundColor,
                   onPressed: controller.canUndoAnnotation
                       ? controller.undoAnnotation
                       : null,
-                  icon: Icon(
-                    Icons.undo_rounded,
-                    size: 19,
-                    color: theme.toolbarForegroundColor,
-                  ),
                 ),
-                IconButton(
+                PdfIconButton(
                   tooltip: 'Redo Annotation',
-                  visualDensity: VisualDensity.compact,
+                  icon: PdfIcons.redo,
+                  size: 19,
+                  color: theme.toolbarForegroundColor,
                   onPressed: controller.canRedoAnnotation
                       ? controller.redoAnnotation
                       : null,
-                  icon: Icon(
-                    Icons.redo_rounded,
-                    size: 19,
-                    color: theme.toolbarForegroundColor,
-                  ),
                 ),
-                IconButton(
+                PdfIconButton(
                   tooltip: 'Clear Page Annotations',
-                  visualDensity: VisualDensity.compact,
+                  icon: PdfIcons.delete,
+                  size: 19,
+                  color: theme.toolbarForegroundColor,
                   onPressed: controller.annotations.isNotEmpty
                       ? () => controller.clearAnnotations(
                             pageNumber: controller.currentPage,
                           )
                       : null,
-                  icon: Icon(
-                    Icons.delete_sweep_outlined,
-                    size: 19,
-                    color: theme.toolbarForegroundColor,
-                  ),
                 ),
               ],
             ),
@@ -540,8 +533,7 @@ class _ToolChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
@@ -549,10 +541,10 @@ class _ToolChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: 0.16)
-              : Colors.transparent,
+              : const Color(0x00000000),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? accentColor : Colors.transparent,
+            color: isSelected ? accentColor : const Color(0x00000000),
           ),
         ),
         child: Row(
@@ -598,34 +590,103 @@ class PdfBottomScrubber extends StatelessWidget {
     final TextEditingController inputController = TextEditingController(
       text: '${controller.currentPage}',
     );
-    final int? target = await showDialog<int>(
+    final FocusNode focusNode = FocusNode();
+    final int? target = await showPdfModalDialog<int>(
       context: context,
       builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('Go to Page'),
-          content: TextField(
-            controller: inputController,
-            autofocus: true,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              labelText: 'Page number (1 - ${controller.pageCount})',
-              border: const OutlineInputBorder(),
-            ),
-            onSubmitted: (String v) {
-              Navigator.of(dialogContext).pop(int.tryParse(v));
-            },
+        return Container(
+          width: 300,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFFFF),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x40000000),
+                blurRadius: 20,
+                offset: Offset(0, 8),
+              ),
+            ],
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext)
-                  .pop(int.tryParse(inputController.text)),
-              child: const Text('Go'),
-            ),
-          ],
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Text(
+                'Go to Page (1 - ${controller.pageCount})',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: EditableText(
+                  controller: inputController,
+                  focusNode: focusNode,
+                  autofocus: true,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF0F172A),
+                  ),
+                  cursorColor: const Color(0xFF2563EB),
+                  backgroundCursorColor: const Color(0xFF94A3B8),
+                  onSubmitted: (String v) {
+                    Navigator.of(dialogContext).pop(int.tryParse(v));
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: <Widget>[
+                  GestureDetector(
+                    onTap: () => Navigator.of(dialogContext).pop(),
+                    child: const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: () => Navigator.of(dialogContext)
+                        .pop(int.tryParse(inputController.text)),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Go',
+                        style: TextStyle(
+                          color: Color(0xFFFFFFFF),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         );
       },
     );
@@ -643,125 +704,166 @@ class PdfBottomScrubber extends StatelessWidget {
         final int current = controller.currentPage;
         final int zoomPercent = (controller.zoomLevel * 100).round();
 
-        return Material(
-          elevation: 6,
-          borderRadius: BorderRadius.circular(28),
-          color: theme.toolbarBackgroundColor,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                IconButton(
-                  tooltip: 'Previous Page',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: controller.hasPreviousPage
-                      ? controller.previousPage
-                      : null,
-                  icon: Icon(
-                    Icons.chevron_left_rounded,
-                    color: theme.toolbarForegroundColor,
-                  ),
-                ),
-                InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: totalPages > 1
-                      ? () => _showJumpToPageDialog(context)
-                      : null,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    child: Text(
-                      '$current / $totalPages',
-                      style: TextStyle(
-                        color: theme.toolbarForegroundColor,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
-                      ),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: theme.toolbarBackgroundColor,
+            borderRadius: BorderRadius.circular(28),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x2E000000),
+                blurRadius: 14,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              PdfIconButton(
+                tooltip: 'Previous Page',
+                icon: PdfIcons.chevronLeft,
+                color: theme.toolbarForegroundColor,
+                onPressed:
+                    controller.hasPreviousPage ? controller.previousPage : null,
+              ),
+              GestureDetector(
+                onTap: totalPages > 1
+                    ? () => _showJumpToPageDialog(context)
+                    : null,
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  child: Text(
+                    '$current / $totalPages',
+                    style: TextStyle(
+                      color: theme.toolbarForegroundColor,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
                     ),
                   ),
                 ),
-                if (totalPages > 1)
-                  SizedBox(
-                    width: 110,
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 3,
-                        thumbShape: const RoundSliderThumbShape(
-                          enabledThumbRadius: 6,
-                        ),
-                      ),
-                      child: Slider(
-                        min: 1.0,
-                        max: totalPages.toDouble(),
-                        divisions: totalPages > 1 ? totalPages - 1 : 1,
-                        value: current.clamp(1, totalPages).toDouble(),
-                        activeColor: theme.accentColor,
-                        onChanged: (double value) {
-                          controller.jumpToPage(value.round());
-                        },
-                      ),
-                    ),
-                  ),
-                IconButton(
-                  tooltip: 'Next Page',
-                  visualDensity: VisualDensity.compact,
-                  onPressed:
-                      controller.hasNextPage ? controller.nextPage : null,
-                  icon: Icon(
-                    Icons.chevron_right_rounded,
-                    color: theme.toolbarForegroundColor,
-                  ),
+              ),
+              if (totalPages > 1)
+                _PageProgressTrack(
+                  currentPage: current,
+                  totalPages: totalPages,
+                  accentColor: theme.accentColor,
+                  onPageSelected: controller.jumpToPage,
                 ),
-                Container(
-                  width: 1,
-                  height: 20,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  color: theme.toolbarForegroundColor.withValues(alpha: 0.18),
-                ),
-                IconButton(
-                  tooltip: 'Zoom Out',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: controller.zoomLevel > controller.minZoom
-                      ? controller.zoomOut
-                      : null,
-                  icon: Icon(
-                    Icons.remove_rounded,
-                    size: 18,
-                    color: theme.toolbarForegroundColor,
-                  ),
-                ),
-                GestureDetector(
-                  onTap: controller.resetZoom,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Text(
-                      '$zoomPercent%',
-                      style: TextStyle(
-                        color: theme.toolbarForegroundColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
+              PdfIconButton(
+                tooltip: 'Next Page',
+                icon: PdfIcons.chevronRight,
+                color: theme.toolbarForegroundColor,
+                onPressed: controller.hasNextPage ? controller.nextPage : null,
+              ),
+              Container(
+                width: 1,
+                height: 20,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                color: theme.toolbarForegroundColor.withValues(alpha: 0.18),
+              ),
+              PdfIconButton(
+                tooltip: 'Zoom Out',
+                icon: PdfIcons.remove,
+                size: 18,
+                color: theme.toolbarForegroundColor,
+                onPressed: controller.zoomLevel > controller.minZoom
+                    ? controller.zoomOut
+                    : null,
+              ),
+              GestureDetector(
+                onTap: controller.resetZoom,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: Text(
+                    '$zoomPercent%',
+                    style: TextStyle(
+                      color: theme.toolbarForegroundColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ),
-                IconButton(
-                  tooltip: 'Zoom In',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: controller.zoomLevel < controller.maxZoom
-                      ? controller.zoomIn
-                      : null,
-                  icon: Icon(
-                    Icons.add_rounded,
-                    size: 18,
-                    color: theme.toolbarForegroundColor,
-                  ),
-                ),
-              ],
-            ),
+              ),
+              PdfIconButton(
+                tooltip: 'Zoom In',
+                icon: PdfIcons.add,
+                size: 18,
+                color: theme.toolbarForegroundColor,
+                onPressed: controller.zoomLevel < controller.maxZoom
+                    ? controller.zoomIn
+                    : null,
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+}
+
+class _PageProgressTrack extends StatelessWidget {
+  const _PageProgressTrack({
+    required this.currentPage,
+    required this.totalPages,
+    required this.accentColor,
+    required this.onPageSelected,
+  });
+
+  final int currentPage;
+  final int totalPages;
+  final Color accentColor;
+  final ValueChanged<int> onPageSelected;
+
+  void _updateFromDx(double dx, double width) {
+    if (width <= 0 || totalPages <= 1) {
+      return;
+    }
+    final double ratio = (dx / width).clamp(0.0, 1.0);
+    final int targetPage = 1 + (ratio * (totalPages - 1)).round();
+    onPageSelected(targetPage);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const double trackWidth = 100.0;
+    final double progress =
+        totalPages <= 1 ? 1.0 : (currentPage - 1) / (totalPages - 1);
+
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (TapDownDetails d) =>
+          _updateFromDx(d.localPosition.dx, trackWidth),
+      onHorizontalDragUpdate: (DragUpdateDetails d) =>
+          _updateFromDx(d.localPosition.dx, trackWidth),
+      child: SizedBox(
+        width: trackWidth,
+        height: 24,
+        child: Center(
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: <Widget>[
+              Container(
+                width: trackWidth,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Container(
+                width: trackWidth * progress.clamp(0.0, 1.0),
+                height: 4,
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

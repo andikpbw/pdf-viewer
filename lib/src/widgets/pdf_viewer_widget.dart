@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import '../controller/pdf_viewer_controller.dart';
 import '../models/pdf_annotation.dart';
@@ -9,6 +9,7 @@ import '../models/pdf_bookmark.dart';
 import '../models/pdf_document.dart';
 import '../models/pdf_page_data.dart';
 import '../models/pdf_source.dart';
+import '../theme/pdf_icons.dart';
 import '../theme/pdf_viewer_theme.dart';
 import 'pdf_annotation_layer.dart';
 import 'pdf_page_canvas.dart';
@@ -331,7 +332,6 @@ class PdfViewer extends StatefulWidget {
 }
 
 class _PdfViewerState extends State<PdfViewer> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late PdfViewerController _controller;
   bool _ownsController = false;
 
@@ -339,6 +339,7 @@ class _PdfViewerState extends State<PdfViewer> {
   Object? _loadError;
   StackTrace? _loadStackTrace;
   bool _isLoading = true;
+  bool _isBookmarksDrawerOpen = false;
 
   int _lastSyncedPage = 1;
   double _lastSyncedZoom = 1.0;
@@ -478,26 +479,33 @@ class _PdfViewerState extends State<PdfViewer> {
     final PdfViewerTheme effectiveTheme =
         widget.theme ?? PdfViewerTheme.fromContext(context);
 
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: DefaultTextStyle(
+        style: TextStyle(
+          color: effectiveTheme.toolbarForegroundColor,
+          fontSize: 14,
+          decoration: TextDecoration.none,
+        ),
+        child: _buildBody(context, effectiveTheme),
+      ),
+    );
+  }
+
+  Widget _buildBody(BuildContext context, PdfViewerTheme effectiveTheme) {
     if (_isLoading) {
       if (widget.loadingBuilder != null) {
         return widget.loadingBuilder!(context);
       }
-      return Scaffold(
-        backgroundColor: effectiveTheme.backgroundColor,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              CircularProgressIndicator(color: effectiveTheme.accentColor),
-              const SizedBox(height: 14),
-              Text(
-                'Loading PDF Document...',
-                style: TextStyle(
-                  color: effectiveTheme.toolbarForegroundColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
+      return ColoredBox(
+        color: effectiveTheme.backgroundColor,
+        child: Center(
+          child: Text(
+            'Loading PDF Document...',
+            style: TextStyle(
+              color: effectiveTheme.toolbarForegroundColor,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
       );
@@ -511,18 +519,18 @@ class _PdfViewerState extends State<PdfViewer> {
           _loadStackTrace,
         );
       }
-      return Scaffold(
-        backgroundColor: effectiveTheme.backgroundColor,
-        body: Center(
+      return ColoredBox(
+        color: effectiveTheme.backgroundColor,
+        child: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
                 const Icon(
-                  Icons.error_outline_rounded,
+                  PdfIcons.errorOutline,
                   size: 48,
-                  color: Colors.redAccent,
+                  color: Color(0xFFEF4444),
                 ),
                 const SizedBox(height: 12),
                 Text(
@@ -544,10 +552,25 @@ class _PdfViewerState extends State<PdfViewer> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                FilledButton.icon(
-                  onPressed: _loadDocument,
-                  icon: const Icon(Icons.refresh_rounded),
-                  label: const Text('Retry'),
+                GestureDetector(
+                  onTap: _loadDocument,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: effectiveTheme.accentColor,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Retry',
+                      style: TextStyle(
+                        color: Color(0xFFFFFFFF),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -558,100 +581,129 @@ class _PdfViewerState extends State<PdfViewer> {
 
     final PdfDocument doc = _document!;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: effectiveTheme.backgroundColor,
-      drawer: _BookmarksDrawer(
-        controller: _controller,
-        theme: effectiveTheme,
-      ),
-      body: Column(
+    return ColoredBox(
+      color: effectiveTheme.backgroundColor,
+      child: Stack(
         children: <Widget>[
-          if (widget.showTopToolbar)
-            PdfTopToolbar(
-              controller: _controller,
-              theme: effectiveTheme,
-              title: widget.title,
-              leadingActions: widget.leadingToolbarActions,
-              trailingActions: widget.trailingToolbarActions,
-              onOpenBookmarksDrawer: () =>
-                  _scaffoldKey.currentState?.openDrawer(),
-            ),
-          Expanded(
-            child: Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: GestureDetector(
-                    onDoubleTap: _handleDoubleTap,
-                    child: InteractiveViewer(
-                      transformationController: _transformController,
-                      minScale: _controller.minZoom,
-                      maxScale: _controller.maxZoom,
-                      panEnabled: _controller.activeAnnotationTool ==
-                          PdfAnnotationTool.none,
-                      scaleEnabled: _controller.activeAnnotationTool ==
-                          PdfAnnotationTool.none,
-                      onInteractionEnd: (ScaleEndDetails details) {
-                        final double currentScale =
-                            _transformController.value.getMaxScaleOnAxis();
-                        _lastSyncedZoom = currentScale;
-                        _controller.setZoom(currentScale);
-                      },
-                      child: _buildViewportLayout(doc, effectiveTheme),
-                    ),
-                  ),
+          Column(
+            children: <Widget>[
+              if (widget.showTopToolbar)
+                PdfTopToolbar(
+                  controller: _controller,
+                  theme: effectiveTheme,
+                  title: widget.title,
+                  leadingActions: widget.leadingToolbarActions,
+                  trailingActions: widget.trailingToolbarActions,
+                  onOpenBookmarksDrawer: () {
+                    setState(() {
+                      _isBookmarksDrawerOpen = !_isBookmarksDrawerOpen;
+                    });
+                  },
                 ),
-                if (_controller.isSearchVisible)
-                  Positioned(
-                    top: 12,
-                    left: 16,
-                    right: 16,
-                    child: Center(
-                      child: PdfSearchBar(
-                        controller: _controller,
-                        theme: effectiveTheme,
+              Expanded(
+                child: Stack(
+                  children: <Widget>[
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onDoubleTap: _handleDoubleTap,
+                        child: InteractiveViewer(
+                          transformationController: _transformController,
+                          minScale: _controller.minZoom,
+                          maxScale: _controller.maxZoom,
+                          panEnabled: _controller.activeAnnotationTool ==
+                              PdfAnnotationTool.none,
+                          scaleEnabled: _controller.activeAnnotationTool ==
+                              PdfAnnotationTool.none,
+                          onInteractionEnd: (ScaleEndDetails details) {
+                            final double currentScale =
+                                _transformController.value.getMaxScaleOnAxis();
+                            _lastSyncedZoom = currentScale;
+                            _controller.setZoom(currentScale);
+                          },
+                          child: _buildViewportLayout(doc, effectiveTheme),
+                        ),
                       ),
                     ),
-                  ),
-                if (_controller.isAnnotationToolbarVisible)
-                  Positioned(
-                    top: _controller.isSearchVisible ? 70 : 12,
-                    left: 16,
-                    right: 16,
-                    child: Center(
-                      child: PdfAnnotationToolbar(
-                        controller: _controller,
-                        theme: effectiveTheme,
+                    if (_controller.isSearchVisible)
+                      Positioned(
+                        top: 12,
+                        left: 16,
+                        right: 16,
+                        child: Center(
+                          child: PdfSearchBar(
+                            controller: _controller,
+                            theme: effectiveTheme,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                if (widget.showSupportBadge)
-                  Positioned(
-                    bottom: widget.showBottomScrubber ? 68 : 14,
-                    right: 14,
-                    child: _SupportPill(theme: effectiveTheme),
-                  ),
-                if (widget.showBottomScrubber)
-                  Positioned(
-                    bottom: 14,
-                    left: 14,
-                    right: 14,
-                    child: Center(
-                      child: PdfBottomScrubber(
-                        controller: _controller,
-                        theme: effectiveTheme,
+                    if (_controller.isAnnotationToolbarVisible)
+                      Positioned(
+                        top: _controller.isSearchVisible ? 70 : 12,
+                        left: 16,
+                        right: 16,
+                        child: Center(
+                          child: PdfAnnotationToolbar(
+                            controller: _controller,
+                            theme: effectiveTheme,
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-              ],
-            ),
+                    if (widget.showSupportBadge)
+                      Positioned(
+                        bottom: widget.showBottomScrubber ? 68 : 14,
+                        right: 14,
+                        child: _SupportPill(theme: effectiveTheme),
+                      ),
+                    if (widget.showBottomScrubber)
+                      Positioned(
+                        bottom: 14,
+                        left: 14,
+                        right: 14,
+                        child: Center(
+                          child: PdfBottomScrubber(
+                            controller: _controller,
+                            theme: effectiveTheme,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (_controller.isThumbnailBarVisible)
+                PdfThumbnailBar(
+                  document: doc,
+                  controller: _controller,
+                  theme: effectiveTheme,
+                ),
+            ],
           ),
-          if (_controller.isThumbnailBarVisible)
-            PdfThumbnailBar(
-              document: doc,
-              controller: _controller,
-              theme: effectiveTheme,
+          if (_isBookmarksDrawerOpen) ...<Widget>[
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isBookmarksDrawerOpen = false;
+                  });
+                },
+                child: const ColoredBox(color: Color(0x66000000)),
+              ),
             ),
+            Positioned(
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: 300,
+              child: _BookmarksDrawer(
+                controller: _controller,
+                theme: effectiveTheme,
+                onClose: () {
+                  setState(() {
+                    _isBookmarksDrawerOpen = false;
+                  });
+                },
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -850,26 +902,37 @@ class _BookmarksDrawer extends StatelessWidget {
   const _BookmarksDrawer({
     required this.controller,
     required this.theme,
+    required this.onClose,
   });
 
   final PdfViewerController controller;
   final PdfViewerTheme theme;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final List<PdfBookmark> bookmarks = controller.allBookmarks;
 
-    return Drawer(
-      backgroundColor: theme.toolbarBackgroundColor,
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: theme.toolbarBackgroundColor,
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x40000000),
+            blurRadius: 16,
+            offset: Offset(4, 0),
+          ),
+        ],
+      ),
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(16, 16, 8, 12),
               child: Row(
                 children: <Widget>[
-                  Icon(Icons.bookmarks_rounded, color: theme.accentColor),
+                  Icon(PdfIcons.bookmark, color: theme.accentColor),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -881,10 +944,19 @@ class _BookmarksDrawer extends StatelessWidget {
                       ),
                     ),
                   ),
+                  PdfIconButton(
+                    tooltip: 'Close Bookmarks',
+                    icon: PdfIcons.close,
+                    color: theme.toolbarForegroundColor,
+                    onPressed: onClose,
+                  ),
                 ],
               ),
             ),
-            const Divider(),
+            Container(
+              height: 1,
+              color: theme.toolbarForegroundColor.withValues(alpha: 0.12),
+            ),
             Expanded(
               child: bookmarks.isEmpty
                   ? Center(
@@ -907,62 +979,81 @@ class _BookmarksDrawer extends StatelessWidget {
                         final PdfBookmark item = bookmarks[index];
                         final bool isCurrent =
                             item.pageNumber == controller.currentPage;
-                        return ListTile(
-                          leading: Icon(
-                            item.isUserBookmark
-                                ? Icons.bookmark_rounded
-                                : Icons.article_outlined,
-                            color: isCurrent
-                                ? theme.accentColor
-                                : theme.toolbarForegroundColor
-                                    .withValues(alpha: 0.7),
-                            size: 20,
-                          ),
-                          title: Text(
-                            item.title,
-                            style: TextStyle(
-                              fontWeight:
-                                  isCurrent ? FontWeight.w700 : FontWeight.w500,
-                              color: isCurrent
-                                  ? theme.accentColor
-                                  : theme.toolbarForegroundColor,
-                              fontSize: 14,
-                            ),
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.accentColor.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'p. ${item.pageNumber}',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: theme.accentColor,
-                              ),
-                            ),
-                          ),
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
                           onTap: () {
                             controller.jumpToPage(item.pageNumber);
-                            Navigator.of(context).pop();
+                            onClose();
                           },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            child: Row(
+                              children: <Widget>[
+                                Icon(
+                                  item.isUserBookmark
+                                      ? PdfIcons.bookmark
+                                      : PdfIcons.toc,
+                                  color: isCurrent
+                                      ? theme.accentColor
+                                      : theme.toolbarForegroundColor
+                                          .withValues(alpha: 0.7),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    item.title,
+                                    style: TextStyle(
+                                      fontWeight: isCurrent
+                                          ? FontWeight.w700
+                                          : FontWeight.w500,
+                                      color: isCurrent
+                                          ? theme.accentColor
+                                          : theme.toolbarForegroundColor,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.accentColor
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    'p. ${item.pageNumber}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.accentColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         );
                       },
                     ),
             ),
-            const Divider(height: 1),
+            Container(
+              height: 1,
+              color: theme.toolbarForegroundColor.withValues(alpha: 0.12),
+            ),
             Padding(
               padding: const EdgeInsets.all(12),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                   Icon(
-                    Icons.auto_awesome_rounded,
+                    PdfIcons.sparkle,
                     size: 14,
                     color: theme.accentColor,
                   ),
@@ -993,31 +1084,37 @@ class _SupportPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      elevation: 3,
-      borderRadius: BorderRadius.circular(20),
-      color: theme.toolbarBackgroundColor,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              Icons.auto_awesome_rounded,
-              size: 13,
-              color: theme.accentColor,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: theme.toolbarBackgroundColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const <BoxShadow>[
+          BoxShadow(
+            color: Color(0x26000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(
+            PdfIcons.sparkle,
+            size: 13,
+            color: theme.accentColor,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            'Humanize AI • humanize.id',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: theme.toolbarForegroundColor,
             ),
-            const SizedBox(width: 5),
-            Text(
-              'Humanize AI • humanize.id',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: theme.toolbarForegroundColor,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

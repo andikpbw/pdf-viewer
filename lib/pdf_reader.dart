@@ -20,6 +20,7 @@ export 'src/models/pdf_source.dart';
 export 'src/parser/pdf_document_builder.dart';
 export 'src/parser/pdf_parser.dart';
 export 'src/parser/zlib_decoder.dart';
+export 'src/theme/pdf_icons.dart';
 export 'src/theme/pdf_viewer_theme.dart';
 export 'src/widgets/pdf_annotation_layer.dart';
 export 'src/widgets/pdf_page_canvas.dart';

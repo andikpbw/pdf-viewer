@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../controller/pdf_viewer_controller.dart';
 import '../models/pdf_document.dart';
@@ -37,9 +37,17 @@ class PdfThumbnailBar extends StatelessWidget {
       builder: (BuildContext context, _) {
         final int activePage = controller.currentPage;
 
-        return Material(
-          elevation: 6,
-          color: theme.toolbarBackgroundColor,
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            color: theme.toolbarBackgroundColor,
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x1F000000),
+                blurRadius: 8,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
           child: SizedBox(
             height: axis == Axis.horizontal ? 116 : null,
             width: axis == Axis.vertical ? 128 : null,

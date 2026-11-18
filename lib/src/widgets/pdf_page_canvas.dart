@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../models/pdf_page_data.dart';
 import '../models/pdf_search_result.dart';

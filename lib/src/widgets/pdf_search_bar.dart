@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 import '../controller/pdf_viewer_controller.dart';
+import '../theme/pdf_icons.dart';
 import '../theme/pdf_viewer_theme.dart';
 
 /// Floating full-text search bar connected to a [PdfViewerController].
@@ -24,17 +25,20 @@ class PdfSearchBar extends StatefulWidget {
 
 class _PdfSearchBarState extends State<PdfSearchBar> {
   late final TextEditingController _textController;
+  late final FocusNode _focusNode;
 
   @override
   void initState() {
     super.initState();
     _textController =
         TextEditingController(text: widget.controller.searchQuery);
+    _focusNode = FocusNode();
   }
 
   @override
   void dispose() {
     _textController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -49,99 +53,106 @@ class _PdfSearchBarState extends State<PdfSearchBar> {
             ? (_textController.text.trim().isEmpty ? '' : '0/0')
             : '${currentIdx + 1}/$total';
 
-        return Material(
-          elevation: 4,
-          borderRadius: BorderRadius.circular(14),
-          color: widget.theme.toolbarBackgroundColor,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Row(
-              children: <Widget>[
-                Icon(
-                  Icons.search_rounded,
-                  size: 20,
-                  color: widget.theme.accentColor,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    autofocus: true,
-                    style: TextStyle(
-                      color: widget.theme.toolbarForegroundColor,
-                      fontSize: 14,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'Find in document...',
-                      hintStyle: TextStyle(
-                        color: widget.theme.toolbarForegroundColor
-                            .withValues(alpha: 0.55),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          constraints: const BoxConstraints(maxWidth: 460),
+          decoration: BoxDecoration(
+            color: widget.theme.toolbarBackgroundColor,
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: const <BoxShadow>[
+              BoxShadow(
+                color: Color(0x29000000),
+                blurRadius: 12,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                PdfIcons.search,
+                size: 20,
+                color: widget.theme.accentColor,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: <Widget>[
+                    if (_textController.text.isEmpty)
+                      IgnorePointer(
+                        child: Text(
+                          'Find in document...',
+                          style: TextStyle(
+                            color: widget.theme.toolbarForegroundColor
+                                .withValues(alpha: 0.55),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    EditableText(
+                      controller: _textController,
+                      focusNode: _focusNode,
+                      autofocus: true,
+                      style: TextStyle(
+                        color: widget.theme.toolbarForegroundColor,
                         fontSize: 14,
                       ),
-                      isDense: true,
-                      border: InputBorder.none,
-                    ),
-                    onChanged: (String value) {
-                      widget.controller.search(value);
-                    },
-                    onSubmitted: (String value) {
-                      if (widget.controller.searchResults.isNotEmpty) {
-                        widget.controller.nextSearchResult();
-                      } else {
+                      cursorColor: widget.theme.accentColor,
+                      backgroundCursorColor: const Color(0xFF94A3B8),
+                      onChanged: (String value) {
+                        setState(() {});
                         widget.controller.search(value);
-                      }
-                    },
-                  ),
+                      },
+                      onSubmitted: (String value) {
+                        if (widget.controller.searchResults.isNotEmpty) {
+                          widget.controller.nextSearchResult();
+                        } else {
+                          widget.controller.search(value);
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                if (counterLabel.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text(
-                      counterLabel,
-                      style: TextStyle(
-                        color: widget.theme.toolbarForegroundColor
-                            .withValues(alpha: 0.75),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+              ),
+              if (counterLabel.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    counterLabel,
+                    style: TextStyle(
+                      color: widget.theme.toolbarForegroundColor
+                          .withValues(alpha: 0.75),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                IconButton(
-                  tooltip: 'Previous Match',
-                  visualDensity: VisualDensity.compact,
-                  onPressed:
-                      total > 0 ? widget.controller.previousSearchResult : null,
-                  icon: Icon(
-                    Icons.keyboard_arrow_up_rounded,
-                    color: widget.theme.toolbarForegroundColor,
-                  ),
                 ),
-                IconButton(
-                  tooltip: 'Next Match',
-                  visualDensity: VisualDensity.compact,
-                  onPressed:
-                      total > 0 ? widget.controller.nextSearchResult : null,
-                  icon: Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    color: widget.theme.toolbarForegroundColor,
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Close Search',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () {
-                    _textController.clear();
-                    widget.controller.toggleSearchVisibility(false);
-                  },
-                  icon: Icon(
-                    Icons.close_rounded,
-                    size: 19,
-                    color: widget.theme.toolbarForegroundColor,
-                  ),
-                ),
-              ],
-            ),
+              PdfIconButton(
+                tooltip: 'Previous Match',
+                icon: PdfIcons.arrowUp,
+                color: widget.theme.toolbarForegroundColor,
+                onPressed:
+                    total > 0 ? widget.controller.previousSearchResult : null,
+              ),
+              PdfIconButton(
+                tooltip: 'Next Match',
+                icon: PdfIcons.arrowDown,
+                color: widget.theme.toolbarForegroundColor,
+                onPressed:
+                    total > 0 ? widget.controller.nextSearchResult : null,
+              ),
+              PdfIconButton(
+                tooltip: 'Close Search',
+                icon: PdfIcons.close,
+                size: 19,
+                color: widget.theme.toolbarForegroundColor,
+                onPressed: () {
+                  _textController.clear();
+                  widget.controller.toggleSearchVisibility(false);
+                },
+              ),
+            ],
           ),
         );
       },

@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/painting.dart';
 
 import '../models/pdf_annotation.dart';
 import '../models/pdf_bookmark.dart';
