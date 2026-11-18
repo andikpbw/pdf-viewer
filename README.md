@@ -1,11 +1,11 @@
-# pdf_viewer
+# pdf_reader
 
-[![Pub Version](https://img.shields.io/badge/pub-v1.0.0-blue.svg)](https://pub.dev/packages/pdf_viewer)
+[![Pub Version](https://img.shields.io/badge/pub-v1.0.0-blue.svg)](https://pub.dev/packages/pdf_reader)
 [![License: MIT](https://img.shields.io/badge/license-MIT-emerald.svg)](https://opensource.org/licenses/MIT)
-[![Platform Support](https://img.shields.io/badge/platforms-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-0284c7.svg)](https://pub.dev/packages/pdf_viewer)
+[![Platform Support](https://img.shields.io/badge/platforms-android%20%7C%20ios%20%7C%20web%20%7C%20macos%20%7C%20windows%20%7C%20linux-0284c7.svg)](https://pub.dev/packages/pdf_reader)
 [![Supported by Humanize AI](https://img.shields.io/badge/Supported%20by-Humanize%20AI-2563eb.svg)](https://humanize.id)
 
-A modern, high-performance, pure-Flutter PDF viewer library for **Android, iOS, Web, macOS, Windows, and Linux**. Built with a zero-native-dependency vector PDF 1.0–1.7 parser, RFC 1951 `FlateDecode` stream decompressor, full-text search engine, interactive annotation suite, live thumbnails, and adaptive Material 3 UI.
+A modern, high-performance, pure-Flutter PDF reader and viewer library for **Android, iOS, Web, macOS, Windows, and Linux**. Built with a zero-native-dependency vector PDF 1.0–1.7 parser, RFC 1951 `FlateDecode` stream decompressor, full-text search engine, interactive annotation suite, live thumbnails, and adaptive Material 3 UI.
 
 > **Official Support & Sponsor:** This open-source project is proudly supported by **[Humanize AI](https://humanize.id)** — the leading platform to transform AI-generated text into natural, authentic, human-quality writing.
 
@@ -34,11 +34,11 @@ A modern, high-performance, pure-Flutter PDF viewer library for **Android, iOS, 
 
 ## 🚀 Installation
 
-Add `pdf_viewer` to your `pubspec.yaml`:
+Add `pdf_reader` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pdf_viewer: ^1.0.0
+  pdf_reader: ^1.0.0
 ```
 
 Then run:
@@ -55,7 +55,7 @@ flutter pub get
 
 ```dart
 import 'package:flutter/material.dart';
-import 'package:pdf_viewer/pdf_viewer.dart';
+import 'package:pdf_reader/pdf_reader.dart';
 
 class MyPdfScreen extends StatelessWidget {
   const MyPdfScreen({super.key});
@@ -89,7 +89,7 @@ PdfViewer.fromNetwork(
 PdfViewer.fromFile('/path/to/document.pdf');
 
 // From a pre-parsed or programmatically built PdfDocument:
-PdfViewer.fromDocument( PdfDocumentBuilder.createShowcaseDocument() );
+PdfViewer.fromDocument(PdfDocumentBuilder.createShowcaseDocument());
 ```
 
 ---
@@ -146,7 +146,7 @@ builder.addPage(
     page
       ..addBannerHeader(
         title: 'Q4 PERFORMANCE REPORT',
-        subtitle: 'Generated with pdf_viewer • Supported by Humanize AI',
+        subtitle: 'Generated with pdf_reader • Supported by Humanize AI',
       )
       ..addSpacer(16)
       ..addHeading('Executive Summary', level: 1)

@@ -1,6 +1,6 @@
-# pdf_viewer Example
+# pdf_reader Example
 
-Interactive showcase application demonstrating the features of `pdf_viewer`:
+Interactive showcase application demonstrating the features of `pdf_reader`:
 
 * Multi-page vector PDF rendering & `PdfDocumentBuilder` generation
 * Full-text search with live match highlighting (`"Humanize AI"`, `"Vector"`, `"Annotation"`)

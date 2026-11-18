@@ -1,5 +1,5 @@
-name: pdf_viewer
-description: A modern, high-performance, pure-Flutter PDF viewer with text search, annotations, thumbnails, bookmarks, multi-layout modes, and dark mode support.
+name: pdf_reader
+description: A modern, high-performance, pure-Flutter PDF reader and viewer with text search, annotations, thumbnails, bookmarks, multi-layout modes, and dark mode.
 version: 1.0.0
 homepage: https://humanize.id
 repository: https://github.com/andikpbw/pdf-viewer

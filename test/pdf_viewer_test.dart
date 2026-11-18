@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pdf_viewer/pdf_viewer.dart';
+import 'package:pdf_reader/pdf_reader.dart';
 
 void main() {
   group('ZlibDecoder', () {

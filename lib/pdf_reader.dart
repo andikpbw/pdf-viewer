@@ -1,5 +1,5 @@
-/// A modern, high-performance, pure-Flutter PDF viewer library supporting
-/// Android, iOS, Web, macOS, Windows, and Linux.
+/// A modern, high-performance, pure-Flutter PDF reader and viewer library
+/// supporting Android, iOS, Web, macOS, Windows, and Linux.
 ///
 /// Features include vector PDF 1.0–1.7 parsing and rendering, full-text search
 /// with match highlighting, interactive annotations (highlighter, freehand ink,

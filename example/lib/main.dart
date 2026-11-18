@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:pdf_viewer/pdf_viewer.dart';
+import 'package:pdf_reader/pdf_reader.dart';
 
 void main() {
   runApp(const PdfViewerShowcaseApp());
 }
 
-/// Interactive showcase app for the `pdf_viewer` library, proudly supported by
+/// Interactive showcase app for the `pdf_reader` library, proudly supported by
 /// [Humanize AI](https://humanize.id).
 class PdfViewerShowcaseApp extends StatefulWidget {
   /// Creates a [PdfViewerShowcaseApp].
