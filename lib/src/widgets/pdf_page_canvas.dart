@@ -5,7 +5,8 @@ import '../models/pdf_search_result.dart';
 import '../theme/pdf_viewer_theme.dart';
 
 /// Renders a single [PdfPageData] using hardware-accelerated Flutter vector
-/// canvas primitives and optional search match highlights.
+/// canvas primitives, optional search match highlights, and active text
+/// selection overlays.
 class PdfPageCanvas extends StatelessWidget {
   /// Creates a [PdfPageCanvas].
   const PdfPageCanvas({
@@ -16,7 +17,10 @@ class PdfPageCanvas extends StatelessWidget {
     this.colorMode = PdfColorMode.normal,
     this.rotationOffset = 0,
     this.searchHighlightColor = const Color(0x66FACC15),
-    this.activeSearchHighlightColor = const Color(0x99F97316),
+    this.activeSearchHighlightColor = const Color(0xA6F97316),
+    this.selectedBounds,
+    this.selectionColor = const Color(0x4D3B82F6),
+    this.fontFamily,
     this.isThumbnail = false,
   });
 
@@ -41,6 +45,15 @@ class PdfPageCanvas extends StatelessWidget {
   /// Fill color for the active search match highlight.
   final Color activeSearchHighlightColor;
 
+  /// Optional normalized bounding rectangle (`0.0..1.0`) of selected text.
+  final Rect? selectedBounds;
+
+  /// Fill color used to highlight [selectedBounds].
+  final Color selectionColor;
+
+  /// Optional default font family for rendered PDF text runs.
+  final String? fontFamily;
+
   /// Whether this canvas is being rendered inside a compact thumbnail preview.
   final bool isThumbnail;
 
@@ -48,6 +61,8 @@ class PdfPageCanvas extends StatelessWidget {
   Widget build(BuildContext context) {
     final int totalRotation = (page.rotation + rotationOffset) % 360;
     final int quarterTurns = (totalRotation ~/ 90) % 4;
+    final String? effectiveFontFamily =
+        fontFamily ?? DefaultTextStyle.of(context).style.fontFamily;
 
     Widget content = LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
@@ -60,6 +75,9 @@ class PdfPageCanvas extends StatelessWidget {
             activeSearchResult: isThumbnail ? null : activeSearchResult,
             searchHighlightColor: searchHighlightColor,
             activeSearchHighlightColor: activeSearchHighlightColor,
+            selectedBounds: isThumbnail ? null : selectedBounds,
+            selectionColor: selectionColor,
+            fontFamily: effectiveFontFamily,
           ),
           child: page.customImageProvider != null
               ? Image(
@@ -97,6 +115,9 @@ class _PdfPageVectorPainter extends CustomPainter {
     required this.activeSearchResult,
     required this.searchHighlightColor,
     required this.activeSearchHighlightColor,
+    required this.selectedBounds,
+    required this.selectionColor,
+    required this.fontFamily,
   });
 
   final PdfPageData page;
@@ -104,6 +125,9 @@ class _PdfPageVectorPainter extends CustomPainter {
   final PdfSearchResult? activeSearchResult;
   final Color searchHighlightColor;
   final Color activeSearchHighlightColor;
+  final Rect? selectedBounds;
+  final Color selectionColor;
+  final String? fontFamily;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -136,6 +160,33 @@ class _PdfPageVectorPainter extends CustomPainter {
       }
     }
 
+    // Paint active text selection overlay.
+    if (selectedBounds != null) {
+      final Rect selRect = Rect.fromLTWH(
+        selectedBounds!.left * size.width,
+        selectedBounds!.top * size.height,
+        selectedBounds!.width * size.width,
+        selectedBounds!.height * size.height,
+      ).inflate(2.5);
+      final RRect rrect = RRect.fromRectAndRadius(
+        selRect,
+        const Radius.circular(4.0),
+      );
+      canvas.drawRRect(
+        rrect,
+        Paint()
+          ..color = selectionColor
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawRRect(
+        rrect,
+        Paint()
+          ..color = selectionColor.withValues(alpha: 0.85)
+          ..strokeWidth = 1.2
+          ..style = PaintingStyle.stroke,
+      );
+    }
+
     // Paint search highlights on top of page content.
     if (searchResults.isNotEmpty) {
       for (final PdfSearchResult match in searchResults) {
@@ -145,10 +196,10 @@ class _PdfPageVectorPainter extends CustomPainter {
           match.bounds.top * size.height,
           match.bounds.width * size.width,
           match.bounds.height * size.height,
-        ).inflate(2.0);
+        ).inflate(2.2);
         final RRect rrect = RRect.fromRectAndRadius(
           highlightRect,
-          const Radius.circular(3.0),
+          const Radius.circular(3.5),
         );
         final Paint fillPaint = Paint()
           ..color = isActive ? activeSearchHighlightColor : searchHighlightColor
@@ -158,7 +209,7 @@ class _PdfPageVectorPainter extends CustomPainter {
         if (isActive) {
           final Paint borderPaint = Paint()
             ..color = const Color(0xFFEA580C)
-            ..strokeWidth = 1.5
+            ..strokeWidth = 1.6
             ..style = PaintingStyle.stroke;
           canvas.drawRRect(rrect, borderPaint);
         }
@@ -236,16 +287,42 @@ class _PdfPageVectorPainter extends CustomPainter {
     double scaleX,
     double scaleY,
   ) {
-    if (el.points.length < 2) {
-      return;
-    }
-    final Path path = Path()
-      ..moveTo(el.points.first.dx * scaleX, el.points.first.dy * scaleY);
-    for (int i = 1; i < el.points.length; i++) {
-      path.lineTo(el.points[i].dx * scaleX, el.points[i].dy * scaleY);
-    }
-    if (el.isClosed) {
-      path.close();
+    final Path path = Path();
+    if (el.commands.isNotEmpty) {
+      for (final PdfPathCommand cmd in el.commands) {
+        switch (cmd) {
+          case PdfMoveToCommand(:final Offset point):
+            path.moveTo(point.dx * scaleX, point.dy * scaleY);
+          case PdfLineToCommand(:final Offset point):
+            path.lineTo(point.dx * scaleX, point.dy * scaleY);
+          case PdfCubicToCommand(
+              :final Offset control1,
+              :final Offset control2,
+              :final Offset end,
+            ):
+            path.cubicTo(
+              control1.dx * scaleX,
+              control1.dy * scaleY,
+              control2.dx * scaleX,
+              control2.dy * scaleY,
+              end.dx * scaleX,
+              end.dy * scaleY,
+            );
+          case PdfClosePathCommand():
+            path.close();
+        }
+      }
+    } else {
+      if (el.points.length < 2) {
+        return;
+      }
+      path.moveTo(el.points.first.dx * scaleX, el.points.first.dy * scaleY);
+      for (int i = 1; i < el.points.length; i++) {
+        path.lineTo(el.points[i].dx * scaleX, el.points[i].dy * scaleY);
+      }
+      if (el.isClosed) {
+        path.close();
+      }
     }
 
     if (el.fillColor != null) {
@@ -262,6 +339,8 @@ class _PdfPageVectorPainter extends CustomPainter {
         Paint()
           ..color = el.strokeColor!
           ..strokeWidth = (el.strokeWidth * scaleX).clamp(0.5, 16.0)
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
           ..style = PaintingStyle.stroke,
       );
     }
@@ -287,7 +366,7 @@ class _PdfPageVectorPainter extends CustomPainter {
         fontSize: scaledFontSize,
         fontWeight: el.isBold ? FontWeight.w700 : FontWeight.w400,
         fontStyle: el.isItalic ? FontStyle.italic : FontStyle.normal,
-        fontFamily: el.isMonospace ? 'monospace' : null,
+        fontFamily: el.isMonospace ? 'RobotoMono' : fontFamily,
         height: 1.15,
       ),
     );
@@ -308,6 +387,9 @@ class _PdfPageVectorPainter extends CustomPainter {
         oldDelegate.searchResults != searchResults ||
         oldDelegate.activeSearchResult != activeSearchResult ||
         oldDelegate.searchHighlightColor != searchHighlightColor ||
-        oldDelegate.activeSearchHighlightColor != activeSearchHighlightColor;
+        oldDelegate.activeSearchHighlightColor != activeSearchHighlightColor ||
+        oldDelegate.selectedBounds != selectedBounds ||
+        oldDelegate.selectionColor != selectionColor ||
+        oldDelegate.fontFamily != fontFamily;
   }
 }

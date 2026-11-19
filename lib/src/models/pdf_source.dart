@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'pdf_document.dart';
 
 /// Describes an asynchronous or synchronous source for loading a [PdfDocument].
+@immutable
 sealed class PdfSource {
   /// Creates a [PdfSource].
   const PdfSource();
@@ -21,6 +23,14 @@ class PdfDocumentSource extends PdfSource {
 
   @override
   Future<PdfDocument> resolve() async => document;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PdfDocumentSource && identical(other.document, document));
+
+  @override
+  int get hashCode => identityHashCode(document);
 }
 
 /// Loads a [PdfDocument] from an in-memory [Uint8List] byte buffer.
@@ -33,6 +43,14 @@ class PdfBytesSource extends PdfSource {
 
   @override
   Future<PdfDocument> resolve() async => PdfDocument.fromBytes(bytes);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PdfBytesSource && identical(other.bytes, bytes));
+
+  @override
+  int get hashCode => identityHashCode(bytes);
 }
 
 /// Loads a [PdfDocument] from a Flutter application asset.
@@ -49,6 +67,16 @@ class PdfAssetSource extends PdfSource {
   @override
   Future<PdfDocument> resolve() =>
       PdfDocument.fromAsset(assetPath, bundle: bundle);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PdfAssetSource &&
+          other.assetPath == assetPath &&
+          other.bundle == bundle);
+
+  @override
+  int get hashCode => Object.hash(assetPath, bundle);
 }
 
 /// Loads a [PdfDocument] from a local file system path.
@@ -61,6 +89,14 @@ class PdfFileSource extends PdfSource {
 
   @override
   Future<PdfDocument> resolve() => PdfDocument.fromFile(filePath);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PdfFileSource && other.filePath == filePath);
+
+  @override
+  int get hashCode => filePath.hashCode;
 }
 
 /// Loads a [PdfDocument] from an HTTP/HTTPS URL.
@@ -77,4 +113,17 @@ class PdfNetworkSource extends PdfSource {
   @override
   Future<PdfDocument> resolve() =>
       PdfDocument.fromNetwork(url, headers: headers);
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is PdfNetworkSource &&
+          other.url == url &&
+          mapEquals(other.headers, headers));
+
+  @override
+  int get hashCode => Object.hash(
+        url,
+        headers == null ? null : Object.hashAllUnordered(headers!.entries),
+      );
 }

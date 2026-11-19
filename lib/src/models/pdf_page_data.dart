@@ -95,19 +95,71 @@ class PdfLineElement extends PdfGraphicElement {
   final double strokeWidth;
 }
 
-/// A polygonal or bezier path primitive on a PDF page.
+/// A single drawing command inside a [PdfPathElement] supporting straight
+/// segments, cubic Bezier curves, and closed subpaths.
+sealed class PdfPathCommand {
+  /// Creates a [PdfPathCommand].
+  const PdfPathCommand();
+}
+
+/// Moves the path pen to [point] without drawing.
+class PdfMoveToCommand extends PdfPathCommand {
+  /// Creates a [PdfMoveToCommand].
+  const PdfMoveToCommand(this.point);
+
+  /// Target point in PDF page coordinates (origin at top-left).
+  final Offset point;
+}
+
+/// Draws a straight line segment from the current point to [point].
+class PdfLineToCommand extends PdfPathCommand {
+  /// Creates a [PdfLineToCommand].
+  const PdfLineToCommand(this.point);
+
+  /// Segment destination in PDF page coordinates (origin at top-left).
+  final Offset point;
+}
+
+/// Draws a cubic Bezier curve using control points [control1], [control2], and
+/// destination [end].
+class PdfCubicToCommand extends PdfPathCommand {
+  /// Creates a [PdfCubicToCommand].
+  const PdfCubicToCommand(this.control1, this.control2, this.end);
+
+  /// First cubic control point.
+  final Offset control1;
+
+  /// Second cubic control point.
+  final Offset control2;
+
+  /// Destination endpoint.
+  final Offset end;
+}
+
+/// Closes the current subpath back to its initial move-to point.
+class PdfClosePathCommand extends PdfPathCommand {
+  /// Creates a [PdfClosePathCommand].
+  const PdfClosePathCommand();
+}
+
+/// A polygonal or cubic Bezier path primitive on a PDF page.
 class PdfPathElement extends PdfGraphicElement {
   /// Creates a [PdfPathElement].
   const PdfPathElement({
-    required this.points,
+    this.points = const <Offset>[],
+    this.commands = const <PdfPathCommand>[],
     this.fillColor,
     this.strokeColor,
     this.strokeWidth = 1.0,
     this.isClosed = false,
   });
 
-  /// Ordered vertices of the path in page points.
+  /// Ordered vertices of a polygonal path in page points.
   final List<Offset> points;
+
+  /// Optional rich vector commands (including cubic Bezier curves and
+  /// multi-subpath contours). When non-empty, takes precedence over [points].
+  final List<PdfPathCommand> commands;
 
   /// Optional fill color.
   final Color? fillColor;
@@ -174,6 +226,21 @@ class PdfPageData {
   /// Concatenated plain text of all text elements on this page.
   String get plainText =>
       textElements.map((PdfTextElement e) => e.text).join(' ');
+
+  /// Finds the [PdfTextElement] located at [normalizedPoint] (`0.0..1.0`),
+  /// or returns `null` if no text run intersects that location.
+  PdfTextElement? hitTestText(Offset normalizedPoint) {
+    final double px = normalizedPoint.dx * width;
+    final double py = normalizedPoint.dy * height;
+    final Offset pagePoint = Offset(px, py);
+
+    for (final PdfTextElement el in textElements) {
+      if (el.bounds.inflate(4.0).contains(pagePoint)) {
+        return el;
+      }
+    }
+    return null;
+  }
 
   /// Creates a copy of this [PdfPageData] with updated properties.
   PdfPageData copyWith({

@@ -43,8 +43,8 @@ class _PdfViewerShowcaseAppState extends State<PdfViewerShowcaseApp> {
         _isDarkTheme ? PdfViewerTheme.dark() : PdfViewerTheme.light();
 
     return WidgetsApp(
-      title: 'pdf_reader — Supported by Humanize AI',
-      color: const Color(0xFF2563EB),
+      title: 'pdf_reader Studio — Supported by Humanize AI',
+      color: activeTheme.accentColor,
       debugShowCheckedModeBanner: false,
       home: PdfViewer.fromDocument(
         _showcaseDocument,

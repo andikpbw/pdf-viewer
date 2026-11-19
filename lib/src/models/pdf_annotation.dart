@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/painting.dart';
 
-/// Supported interactive annotation types in `pdf_viewer`.
+/// Supported interactive annotation types in `pdf_reader`.
 enum PdfAnnotationType {
   /// A semi-transparent rectangular highlight over a region of a page.
   highlight,
+
+  /// A horizontal underline stroke drawn beneath a text region.
+  underline,
+
+  /// A horizontal strikethrough line drawn across a text region.
+  strikethrough,
 
   /// A freehand ink stroke drawn on a page.
   ink,
@@ -13,23 +19,32 @@ enum PdfAnnotationType {
   /// A sticky note or comment anchored to a specific point on a page.
   stickyNote,
 
-  /// A text label or stamp placed on a page.
+  /// A stylized text label or review stamp placed on a page.
   stamp,
 }
 
 /// Active interactive tool selected in the annotation toolbar.
 enum PdfAnnotationTool {
-  /// Default pan, zoom, and text-inspection mode (no drawing).
+  /// Default pan, zoom, and text-selection mode (no drawing).
   none,
 
   /// Rectangular highlighter tool.
   highlight,
+
+  /// Text/region underline markup tool.
+  underline,
+
+  /// Text/region strikethrough markup tool.
+  strikethrough,
 
   /// Freehand pen/ink drawing tool.
   ink,
 
   /// Sticky note placement tool.
   stickyNote,
+
+  /// Review stamp placement tool (e.g., APPROVED, REVIEWED).
+  stamp,
 }
 
 /// Represents a user or document annotation placed on a specific PDF page.

@@ -8,7 +8,7 @@ import 'pdf_page_data.dart';
 import 'pdf_search_result.dart';
 
 /// Represents a loaded and parsed PDF document ready for viewing, searching,
-/// and annotating.
+/// text extraction, and annotating.
 class PdfDocument {
   /// Creates a [PdfDocument] from parsed pages, metadata, and bookmarks.
   const PdfDocument({
@@ -67,6 +67,15 @@ class PdfDocument {
   /// Total number of pages in the document.
   int get pageCount => pages.length;
 
+  /// Approximate total word count across all pages in the document.
+  int get wordCount {
+    final String text = extractText().trim();
+    if (text.isEmpty) {
+      return 0;
+    }
+    return text.split(RegExp(r'\s+')).length;
+  }
+
   /// Returns the [PdfPageData] for the 1-based [pageNumber].
   ///
   /// Throws a [RangeError] if [pageNumber] is outside `1..pageCount`.
@@ -75,6 +84,18 @@ class PdfDocument {
       throw RangeError.range(pageNumber, 1, pages.length, 'pageNumber');
     }
     return pages[pageNumber - 1];
+  }
+
+  /// Extracts concatenated plain text from the entire document, or from a
+  /// single 1-based [pageNumber] when provided.
+  String extractText({int? pageNumber}) {
+    if (pageNumber != null) {
+      if (pageNumber < 1 || pageNumber > pages.length) {
+        return '';
+      }
+      return pages[pageNumber - 1].plainText;
+    }
+    return pages.map((PdfPageData p) => p.plainText).join('\n\n');
   }
 
   /// Performs a full-text search across all pages in the document.
