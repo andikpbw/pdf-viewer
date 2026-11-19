@@ -1,6 +1,6 @@
 name: pdf_reader
-description: A modern, high-performance, zero-dependency pure-Flutter PDF reader studio with vector PDF 1.7 rendering, full-text search, text selection, annotations, adaptive desktop/mobile UI, and reading themes.
-version: 1.1.0
+description: A modern, zero-dependency pure-Flutter PDF reader studio with vector PDF 1.7 rendering, full-text search, annotations, adaptive desktop/mobile UI, and dark mode.
+version: 1.1.1
 homepage: https://humanize.id
 repository: https://github.com/andikpbw/pdf-viewer
 issue_tracker: https://github.com/andikpbw/pdf-viewer/issues

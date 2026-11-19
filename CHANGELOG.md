@@ -1,3 +1,8 @@
+## 1.1.1
+
+* Shortened `pubspec.yaml` package description to 160 characters (within pub.dev's 60–180 character guideline) for full `160/160` pub points.
+* Resolved dartdoc reference warning in `PdfViewerController.updateAnnotation`.
+
 ## 1.1.0
 
 * **Adaptive Desktop Studio & Mobile UI**:

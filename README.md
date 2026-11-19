@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <a href="https://pub.dev/packages/pdf_reader"><img src="https://img.shields.io/badge/pub-v1.1.0-2563eb.svg?style=flat-square" alt="Pub Version" /></a>
+  <a href="https://pub.dev/packages/pdf_reader"><img src="https://img.shields.io/badge/pub-v1.1.1-2563eb.svg?style=flat-square" alt="Pub Version" /></a>
   <a href="https://pub.dev/packages/pdf_reader/score"><img src="https://img.shields.io/badge/pub%20points-160%2F160-eab308.svg?style=flat-square" alt="160/160 Pub Points" /></a>
   <a href="https://pub.dev/packages/pdf_reader"><img src="https://img.shields.io/badge/dependencies-zero-10b981.svg?style=flat-square" alt="Zero Dependencies" /></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-059669.svg?style=flat-square" alt="License: MIT" /></a>
@@ -92,7 +92,7 @@ Add `pdf_reader` to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pdf_reader: ^1.1.0
+  pdf_reader: ^1.1.1
 ```
 
 Then run:

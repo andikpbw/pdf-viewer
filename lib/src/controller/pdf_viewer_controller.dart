@@ -597,8 +597,8 @@ class PdfViewerController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Replaces an existing annotation matching [updated.id] and records an undo
-  /// snapshot.
+  /// Replaces an existing annotation matching [updated]'s [PdfAnnotation.id]
+  /// and records an undo snapshot.
   void updateAnnotation(PdfAnnotation updated) {
     final int idx =
         _annotations.indexWhere((PdfAnnotation a) => a.id == updated.id);
